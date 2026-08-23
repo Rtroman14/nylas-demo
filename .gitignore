@@ -1,2 +1,10 @@
 node_modules
 .env
+.env.*
+!.env.example
+
+# Local grant + thread state. Real apps store this on a user record in a database.
+.data/
+
+# Scratch files used while testing sends.
+tmp/

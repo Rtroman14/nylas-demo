@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Nylas Email API Demo</title>
+        <link rel="stylesheet" href="/styles.css" />
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14'>&#9993;</text></svg>"
+        />
+    </head>
+    <body>
+        <header class="topbar">
+            <div class="topbar-title">
+                <h1>Nylas Email API Demo</h1>
+                <p>Connect a mailbox, send mail, and watch replies arrive over webhooks.</p>
+            </div>
+            <div id="connection" class="connection">
+                <span class="status status-loading">Checking…</span>
+            </div>
+        </header>
+
+        <div id="banner" class="banner" hidden></div>
+
+        <main class="grid">
+            <section class="panel">
+                <h2>1. Mailbox</h2>
+                <div id="mailbox-body" class="panel-body">
+                    <p class="muted">Loading…</p>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>2. Send an email</h2>
+                <form id="send-form" class="panel-body">
+                    <label>
+                        To
+                        <input type="email" name="to" placeholder="someone@example.com" required />
+                    </label>
+                    <label>
+                        Subject
+                        <input type="text" name="subject" placeholder="Your roof quote" />
+                    </label>
+                    <label>
+                        Body
+                        <span class="hint">HTML. Signatures only apply to HTML bodies.</span>
+                        <textarea name="body" rows="5" required>
+Hi there,<br><br>This was sent with the Nylas Email API.<br><br>Thanks!</textarea
+                        >
+                    </label>
+                    <label>
+                        Signature
+                        <select name="signatureId" id="signature-select">
+                            <option value="">None</option>
+                        </select>
+                        <span class="hint">
+                            Stored on Nylas and appended server-side.
+                            <button type="button" id="create-signature" class="linkish">
+                                Create a demo signature
+                            </button>
+                        </span>
+                    </label>
+                    <label>
+                        Attachment
+                        <input type="file" name="attachments" id="attachments" multiple />
+                        <span class="hint">A PDF is the case worth testing.</span>
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" name="trackOpens" value="true" />
+                        Track opens, link clicks, and thread replies
+                    </label>
+                    <button type="submit" class="primary">Send</button>
+                    <p id="send-result" class="result" hidden></p>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>3. Tracked threads</h2>
+                <p class="panel-note">
+                    Threads this app has sent on. An inbound message matching one of these thread
+                    IDs is a reply.
+                </p>
+                <div id="threads" class="panel-body">
+                    <p class="muted">Nothing sent yet.</p>
+                </div>
+            </section>
+
+            <section class="panel panel-wide">
+                <h2>
+                    4. Live activity
+                    <span id="stream-status" class="pill pill-off">disconnected</span>
+                </h2>
+                <p class="panel-note">
+                    Sends, webhook notifications, and detected replies, newest first.
+                </p>
+                <div id="events" class="events">
+                    <p class="muted">Waiting for activity…</p>
+                </div>
+            </section>
+        </main>
+
+        <script src="/app.js" type="module"></script>
+    </body>
+</html>
