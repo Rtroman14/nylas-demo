@@ -51,6 +51,28 @@ const recipients = [...(original.from ?? []), ...(original.to ?? [])].filter((ad
 
 This is what `Nylas.messages.reply()` does when `to` is omitted.
 
+**It merges `from` and `to` only — `cc` is dropped.** That is correct for a plain reply
+and wrong for a thread where other people were copied in, such as a homeowner who
+looped in a spouse. If the whole group should stay on the thread, read the original and
+pass `to` and `cc` yourself; do not rely on the fallback.
+
+## Verified behaviour
+
+Both shapes were run against a live Google grant. Replying to **your own** last send
+with `to` omitted, and replying to **their** newest message:
+
+| | Chained off our own send | Chained off their reply |
+| --- | --- | --- |
+| `thread_id` | unchanged | unchanged |
+| `subject` | `Re: <original>` | `Re: <original>` |
+| `to` | the other party, not us | the other party |
+| `In-Reply-To` | set | set |
+| `References` | set | full chain, both prior IDs |
+
+The recipient's Gmail grouped each one into the existing conversation rather than
+starting a new one. Chaining off the newest message is what produces the complete
+`References` chain in the second column.
+
 ## Subject
 
 Nylas does not prefix it for you. `Re: ` if it is not already there:

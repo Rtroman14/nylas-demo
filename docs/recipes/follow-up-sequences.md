@@ -65,9 +65,17 @@ array is chronological.
 
 In an unanswered sequence the newest message is one *you* sent, which walks straight
 into the trap in [reply-in-thread.md](reply-in-thread.md): its `from` is your own
-mailbox, so deriving recipients from it mails the sequence back to yourself. Pass `to`
-explicitly. `Nylas.messages.reply()` filters your own address out when you don't, but
-being explicit is cheaper than trusting that.
+mailbox, so deriving recipients from it mails the sequence back to yourself.
+`Nylas.messages.reply()` filters your own address out, and that was confirmed live —
+a nudge chained off our own send went to the recipient, kept the same `thread_id`, set
+`In-Reply-To` and `References`, and grouped into the existing conversation in the
+recipient's Gmail rather than starting a new one.
+
+Pass `to` explicitly anyway, for a reason the self-exclusion does not cover: the
+fallback merges `from` and `to` and **drops `cc`**. On a proposal thread where the
+homeowner copied a spouse or a co-owner, an automated nudge would quietly write to
+fewer people than the conversation contains. Read the original and carry `to` and `cc`
+forward yourself.
 
 Keep the subject stable. Nylas does not prefix `Re:` for you, and `messages.reply()`
 adds one only when it is missing, so a nudge on an existing `Re:` subject stays a
