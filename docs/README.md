@@ -14,6 +14,9 @@ reading files instead of guessing or making network calls.
 | Add a signature to outgoing mail | [recipes/send-with-signature.md](recipes/send-with-signature.md) |
 | Reply so it stays in the same thread | [recipes/reply-in-thread.md](recipes/reply-in-thread.md) |
 | Get notified when someone replies | [recipes/detect-replies.md](recipes/detect-replies.md) |
+| Chase an unanswered proposal over several emails | [recipes/follow-up-sequences.md](recipes/follow-up-sequences.md) |
+| Read someone's whole history with us before replying | [recipes/follow-up-sequences.md](recipes/follow-up-sequences.md) |
+| Tag a send with a CRM record ID | [recipes/follow-up-sequences.md](recipes/follow-up-sequences.md) |
 | Receive webhooks on my laptop | [recipes/local-webhook-tunnel.md](recipes/local-webhook-tunnel.md) |
 | Avoid sending twice on a retry | [recipes/idempotent-send.md](recipes/idempotent-send.md) |
 | Strip quoted text from a reply | [recipes/clean-message-bodies.md](recipes/clean-message-bodies.md) |
@@ -54,7 +57,21 @@ These are the ones that cost real debugging time.
   after its first failure. Fix the problem, then create a *new* webhook.
 - **`message.created` fires for your own sends too.** Every handler needs to work out
   the direction of the message before treating it as an inbound reply.
-- **Signatures are HTML-only.** A plaintext body silently gets no signature.
+- **Signatures are HTML-only.** A plaintext body silently gets no signature. So do
+  open and link tracking, which need a pixel and rewritten anchors respectively.
+- **There is no `thread_id` on send.** Threading is `reply_to_message_id` and nothing
+  else — it is what becomes the `In-Reply-To` and `References` headers. Reply to the
+  *newest* message in the thread; an older one branches it.
+- **Metadata only ever lands on your own message.** An inbound reply is a separate
+  object with no metadata, so metadata cannot be how you recognize a response. Use
+  `thread_id` for that. Only `key1`–`key5` are indexed and therefore queryable, and
+  `metadata_pair` cannot be combined with a filter like `from` or `any_email`.
+- **Message tracking is unavailable on Sandbox applications,** and the whole send
+  fails with `Tracking options are not allowed for trial accounts` — not just tracking.
+- **A JSON send is capped at 3MB for the whole request.** Larger goes multipart, which
+  drops the send rate limit from 200/s to 10/s per grant.
+- **`any_email` beats `from`** for reading a conversation: it matches To, From, Cc, and
+  Bcc, so it returns your sends as well as theirs.
 - **`in` takes a folder ID, not a name.** `in=inbox` returns a 400 on threads.
 - **Casing depends on the source.** The Node SDK camelCases responses (`threadId`),
   but webhook payloads arrive raw from Nylas as snake_case (`thread_id`). This repo

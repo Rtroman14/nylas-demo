@@ -42,9 +42,20 @@ const PAGES = [
     ["email-parse-messages.md", "/docs/v3/email/parse-messages.md"],
     ["email-threads.md", "/docs/v3/email/threads.md"],
     ["email-attachments.md", "/docs/v3/email/attachments.md"],
+    ["email-message-tracking.md", "/docs/v3/email/message-tracking.md"],
+    ["email-scheduled-send.md", "/docs/v3/email/scheduled-send.md"],
+
+    // Tagging your own sends so you can find them again
+    ["metadata.md", "/docs/dev-guide/metadata.md"],
 
     // Webhooks
     ["notifications.md", "/docs/v3/notifications.md"],
+    ["webhook-best-practices.md", "/docs/dev-guide/best-practices/webhook-best-practices.md"],
+    ["grant-lifecycle.md", "/docs/dev-guide/best-practices/grant-lifecycle.md"],
+
+    // Deliverability and rate limits, which bound any sending sequence
+    ["search.md", "/docs/dev-guide/best-practices/search.md"],
+    ["rate-limits.md", "/docs/dev-guide/platform/rate-limits.md"],
 
     // API reference
     ["api-messages.md", "/docs/reference/api/messages.md"],
