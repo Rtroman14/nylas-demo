@@ -41,7 +41,7 @@ Store `threadId` if you care about replies. See
 | `replyToMessageId` | Threads this message under an existing one |
 | `signatureId` | Nylas appends a stored signature server-side. HTML bodies only |
 | `attachments` | See [send-with-attachment.md](send-with-attachment.md) |
-| `trackingOptions` | `{ opens, links, threadReplies, label }` |
+| `trackingOptions` | `{ opens, links, threadReplies, label }`. Nylas trial/sandbox apps reject this with "Tracking options are not allowed for trial accounts." |
 | `sendAt` | Unix seconds; schedules the send |
 | `customHeaders` | Arbitrary outbound headers |
 

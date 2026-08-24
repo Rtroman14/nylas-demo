@@ -118,11 +118,12 @@ router.get("/oauth/callback", async (req, res) => {
  */
 router.post("/auth/disconnect", async (req, res) => {
     const grant = store.getGrant();
-    if (!grant) return res.status(400).json({ ok: false, error: "No mailbox connected." });
+    const grantId = grant?.grantId || config.fallbackGrantId;
+    if (!grantId) return res.status(400).json({ ok: false, error: "No mailbox connected." });
 
     try {
-        await Nylas.grants.remove(grant.grantId);
-        feed.push("auth", `Disconnected ${grant.email}`);
+        await Nylas.grants.remove(grantId);
+        feed.push("auth", `Disconnected ${grant?.email ?? grantId}`);
     } catch (err) {
         // A grant already gone on Nylas' side shouldn't strand the local copy.
         feed.push("error", `Remote grant delete failed (clearing locally): ${err.message}`);
