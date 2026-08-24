@@ -114,6 +114,44 @@ const toAddresses = (input) => {
     return out.length ? out : undefined;
 };
 
+/**
+ * Metadata is your own key-value data stored on a message or draft, and it is
+ * how you find your own sends again later without a local database.
+ *
+ * The catch is that only `key1` through `key5` are indexed, so those are the
+ * only keys `metadataPair` can filter on. Anything else is write-only: it comes
+ * back when you read the message, but you cannot search by it. Put the IDs you
+ * will query by in the reserved keys and use descriptive names for the rest.
+ */
+const INDEXED_METADATA_KEYS = ["key1", "key2", "key3", "key4", "key5"];
+
+const assertMetadata = (metadata) => {
+    const entries = Object.entries(metadata);
+
+    if (entries.length > 50) {
+        throw new NylasDemoError("Metadata is limited to 50 key-value pairs.", { status: 400 });
+    }
+
+    for (const [key, value] of entries) {
+        if (key.length > 40) {
+            throw new NylasDemoError(`Metadata key "${key}" exceeds 40 characters.`, {
+                status: 400,
+            });
+        }
+        if (typeof value !== "string") {
+            throw new NylasDemoError(
+                `Metadata value for "${key}" must be a string; Nylas does not support nested metadata.`,
+                { status: 400 }
+            );
+        }
+        if (value.length > 500) {
+            throw new NylasDemoError(`Metadata value for "${key}" exceeds 500 characters.`, {
+                status: 400,
+            });
+        }
+    }
+};
+
 /* ------------------------------------------------------------------ auth --- */
 
 const auth = {
@@ -207,6 +245,10 @@ const messages = {
      *   replyToMessageId Threads this message under an existing one.
      *   idempotencyKey   Dedupes retries for 1 hour. Max 256 chars.
      *   trackingOptions  { opens, links, threadReplies, label }
+     *   metadata         Your own key-value pairs, stored on the message. Up to 50
+     *                    pairs; keys 40 chars, values 500. Only key1..key5 are
+     *                    indexed, so only those are queryable via metadataPair.
+     *   customHeaders    [{ name, value }] extra outbound headers.
      *
      * @returns the sent message, including `id` and `threadId`.
      */
@@ -221,6 +263,8 @@ const messages = {
         signatureId,
         attachments: files,
         trackingOptions,
+        metadata,
+        customHeaders,
         sendAt,
         idempotencyKey,
         grantId,
@@ -228,6 +272,7 @@ const messages = {
         const recipients = toAddresses(to);
         if (!recipients) throw new NylasDemoError("`to` is required.", { status: 400 });
         if (body === undefined) throw new NylasDemoError("`body` is required.", { status: 400 });
+        if (metadata) assertMetadata(metadata);
 
         const requestBody = {
             to: recipients,
@@ -240,6 +285,8 @@ const messages = {
             ...(signatureId ? { signatureId } : {}),
             ...(files?.length ? { attachments: files } : {}),
             ...(trackingOptions ? { trackingOptions } : {}),
+            ...(metadata ? { metadata } : {}),
+            ...(customHeaders?.length ? { customHeaders } : {}),
             ...(sendAt ? { sendAt } : {}),
         };
 
@@ -321,6 +368,13 @@ const messages = {
      * Useful filters: `threadId`, `unread`, `starred`, `from`, `to`, `subject`
      * (case-sensitive, partial), `hasAttachment`, `in` (folder ID, not a name),
      * `receivedAfter`, `receivedBefore`, `searchQueryNative`.
+     *
+     * `anyEmail` takes a comma-separated list (max 25) and matches To, From, Cc,
+     * or Bcc, which is what you want to pull someone's whole history with you —
+     * `from` alone only gets their half of it.
+     *
+     * `metadataPair` ("key1:value") filters on metadata you set, but it cannot
+     * be combined with a provider-backed filter such as `from` or `anyEmail`.
      *
      * Shrink the payload with `select` (comma-separated fields) or
      * `fields: "include_basic_headers"` when you only need threading headers.
@@ -460,6 +514,19 @@ const attachments = {
             queryParams: { messageId },
         });
         return res.data;
+    },
+
+    /**
+     * A JSON send is capped at 3MB for the whole HTTP request, and the SDK
+     * switches to multipart past that. Worth knowing because the multipart send
+     * rate limit is 10 requests/second/grant against 200 for JSON.
+     */
+    fitsInJsonSend(files) {
+        const total = (Array.isArray(files) ? files : [files]).reduce(
+            (sum, file) => sum + (file?.content?.length ?? 0),
+            0
+        );
+        return total < 3 * 1024 * 1024;
     },
 
     /** The bytes, as a Buffer. */
@@ -700,6 +767,7 @@ const Nylas = {
     setActiveGrant,
     currentGrantId,
     DEFAULT_TRIGGERS,
+    INDEXED_METADATA_KEYS,
     NylasDemoError,
 };
 
@@ -718,5 +786,6 @@ export {
     setActiveGrant,
     currentGrantId,
     DEFAULT_TRIGGERS,
+    INDEXED_METADATA_KEYS,
     NylasDemoError,
 };
