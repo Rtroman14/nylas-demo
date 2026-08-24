@@ -578,12 +578,38 @@ const webhooks = {
         return { deleted: true };
     },
 
+    /**
+     * Ask Nylas to POST a mock notification at `webhookUrl` and report whether
+     * it answered 200. Good for proving the endpoint is reachable before any
+     * mailbox is connected.
+     *
+     * Nylas signs this delivery with the literal string "mock-webhook-secret",
+     * NOT the secret of the webhook registered at that URL — so a receiver that
+     * verifies signatures correctly will log this one as invalid. That is
+     * expected here and is not a sign the verification is broken.
+     */
     async sendTestEvent({ webhookUrl, triggerType = "message.created" } = {}) {
+        if (!webhookUrl) throw new NylasDemoError("`webhookUrl` is required.", { status: 400 });
+
         return request({
+            method: "POST",
+            path: "/v3/webhooks/send-test-event",
+            body: { webhookUrl, triggerType },
+        });
+    },
+
+    /**
+     * The example payload Nylas would send for a trigger, returned rather than
+     * delivered. Handy for checking field names and casing while writing a
+     * handler.
+     */
+    async mockPayload({ webhookUrl, triggerType = "message.created" } = {}) {
+        const res = await request({
             method: "POST",
             path: "/v3/webhooks/mock-payload",
             body: { webhookUrl, triggerType },
         });
+        return res.data;
     },
 
     /**

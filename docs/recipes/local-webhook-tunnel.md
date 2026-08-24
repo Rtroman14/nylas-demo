@@ -83,6 +83,26 @@ curl "https://your-tunnel.trycloudflare.com/webhooks/nylas?challenge=test"
 # must print exactly: test
 ```
 
+## Test the endpoint before a mailbox is connected
+
+Nylas will POST a mock notification at any URL you name and tell you whether it
+answered `200`:
+
+```js
+await Nylas.webhooks.sendTestEvent({
+    webhookUrl: "https://your-tunnel.trycloudflare.com/webhooks/nylas",
+});
+// -> "success"
+```
+
+**This delivery is signed with the literal string `mock-webhook-secret`**, not with
+the secret of the webhook you registered at that URL. So a handler that verifies
+signatures correctly logs this one as `invalid`. That is the expected result and does
+not mean verification is broken — confirm with a payload you sign yourself, below.
+
+`Nylas.webhooks.mockPayload()` returns the same example payload instead of delivering
+it, which is the quicker way to check field names and casing.
+
 ## Testing without a tunnel
 
 The endpoint is fully testable offline by signing a payload yourself:
