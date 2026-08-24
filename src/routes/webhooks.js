@@ -106,6 +106,34 @@ const handleNotification = async (body, signatureStatus) => {
     }
 };
 
+/**
+ * The connected mailbox's own address, which is how an inbound notification is
+ * told apart from our own send echoing back.
+ *
+ * The OAuth flow saves the address alongside the grant, but a mailbox pinned
+ * with NYLAS_GRANT_ID never runs that flow, so fall back to asking Nylas.
+ * Cached because it is needed on every notification and never changes.
+ */
+const resolvedEmails = new Map();
+
+const mailboxEmail = async (grantId) => {
+    const saved = store.getGrant();
+    if (saved?.email && (!grantId || saved.grantId === grantId)) return saved.email;
+
+    const key = grantId || "active";
+
+    if (!resolvedEmails.has(key)) {
+        try {
+            resolvedEmails.set(key, (await Nylas.grants.email(grantId)) ?? null);
+        } catch (err) {
+            feed.push("error", `Could not resolve the mailbox address: ${err.message}`);
+            resolvedEmails.set(key, null);
+        }
+    }
+
+    return resolvedEmails.get(key);
+};
+
 /** Out-of-office autoresponders look like replies but aren't. */
 const AUTO_REPLY_RE =
     /^\s*(re:\s*)?(automatic reply|auto(matic)?[- ]?response|out of (the )?office|undeliverable|delivery status notification)/i;
@@ -136,8 +164,8 @@ const handleInboundMessage = async (object, { truncated }) => {
     if (!sender) return;
 
     // Our own send echoing back. Track the thread so a later reply matches.
-    const grant = store.getGrant();
-    if (grant?.email && sender.toLowerCase() === grant.email.toLowerCase()) {
+    const ourEmail = await mailboxEmail(message.grant_id);
+    if (ourEmail && sender.toLowerCase() === ourEmail.toLowerCase()) {
         store.trackThread(threadId, { messageId: message.id, subject });
         feed.push("info", `Our own send on thread ${threadId ?? "?"} — tracking it.`);
         return;

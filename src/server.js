@@ -71,11 +71,15 @@ app.listen(config.port, () => {
                 : "off (NYLAS_WEBHOOK_SECRET not set)"
         }`
     );
-    console.log(
-        `  Mailbox           ${
-            saved ? `${saved.email} (${saved.grantId})` : "none connected — open / to connect"
-        }`
-    );
+    // A mailbox pinned with NYLAS_GRANT_ID is just as connected as one from the
+    // OAuth flow; it simply has no locally stored email address to show.
+    const mailbox = saved
+        ? `${saved.email} (${saved.grantId})`
+        : config.fallbackGrantId
+          ? `${config.fallbackGrantId} (pinned by NYLAS_GRANT_ID)`
+          : "none connected — open / to connect";
+
+    console.log(`  Mailbox           ${mailbox}`);
 
     if (missing.length) {
         console.log(`\n  Not configured: ${missing.join(", ")}`);
