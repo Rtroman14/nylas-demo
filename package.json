@@ -1,0 +1,22 @@
+{
+  "name": "nylas-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference implementation of the Nylas v3 Email API: connect a mailbox, send with attachments and signatures, and receive thread-aware replies over webhooks.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "docs:fetch": "node scripts/fetch-docs.js",
+    "grants": "node scripts/list-grants.js",
+    "webhook:create": "node scripts/create-webhook.js",
+    "send:test": "node scripts/send-test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "multer": "^2.2.0",
+    "nylas": "^8.4.0"
+  }
+}
