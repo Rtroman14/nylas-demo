@@ -158,22 +158,39 @@ await Nylas.messages.send({
 });
 ```
 
-- **Only `key1` through `key5` are indexed.** Everything else comes back when you read
-  the message but cannot be searched. Put the IDs you will query by in the reserved
-  keys. `Nylas.INDEXED_METADATA_KEYS` is the list.
-- **Limits:** 50 pairs, keys 40 characters, values 500 characters, strings only — no
-  nested objects. `Nylas.messages.send()` validates all of this before it calls out.
-- **Metadata lands on the message *you* create, never on their reply.** The reply is a
-  separate object owned by the sender's client, and it has no metadata. This is the
-  single most important thing to understand here: metadata cannot tag an inbound
-  message, so it cannot be the mechanism that recognizes a response.
-- **`metadataPair` cannot be combined with a provider-backed filter.** Querying
-  `metadataPair=key1:proposal_9` alongside `from` or `anyEmail` returns an error, so
-  metadata lookups are their own query.
+Everything below was confirmed against a live Google grant, because most of it is not
+obvious from the docs.
+
+- **Metadata lands on the message *you* create, never on their reply.** Read the two
+  messages of an answered thread back and your send carries the metadata while the
+  reply returns `metadata: null`. A `metadataPair` query on that thread matches only
+  your own message. This is the single most important point here: metadata cannot tag
+  an inbound message, so it cannot be the mechanism that recognizes a response.
+- **Only `key1` through `key5` are filterable.** Anything else is stored and returned
+  but rejected as a filter — `metadata_pair=sequence_step:2` fails with
+  `metadata filtering not allowed on provided 'key': sequence_step`. Put the IDs you
+  will query by in the reserved keys. `Nylas.INDEXED_METADATA_KEYS` is the list.
+- **The Node SDK wants `metadataPair` as an object, not the `"key1:value"` string the
+  docs show.** Passing the string makes the SDK iterate it character by character and
+  the API rejects it with the baffling
+  `metadata filtering not allowed on provided 'key': 0`. `Nylas.messages.list()`
+  accepts either form and normalizes it.
+- **The SDK camelCases metadata keys on the way out, which is lossy.** Write
+  `already_snake` and the stored key really is `already_snake` — confirmed over raw
+  HTTP — but read it back through the SDK and it is `alreadySnake`. A key with an
+  underscore does not survive a write/read round trip through the SDK, so either avoid
+  underscores in custom keys or read metadata over raw HTTP. `key1`–`key5` are immune,
+  which is another reason to keep the identifiers there.
+- **`metadataPair` cannot be combined with a provider-backed filter.** Pairing it with
+  `from`, `anyEmail`, `threadId`, or `subject` returns
+  `Query params can only filter by either 'metadata' or 'provider filters'`. Metadata
+  lookups are always their own separate query.
 - **`PUT`/`PATCH` replaces the whole metadata object.** Updating one key without
   resending the others deletes them.
 - **Metadata changes generate no notification,** but metadata that exists on an object
   is included in its `*.created` and `*.updated` payloads.
+- **Limits:** 50 pairs, keys 40 characters, values 500 characters, strings only — no
+  nested objects. `Nylas.messages.send()` validates all of this before it calls out.
 
 So the division of labour: `thread_id` recognizes the reply, and metadata is how you
 recover the CRM mapping straight from Nylas when your own records are missing,
@@ -197,8 +214,15 @@ the short version:
 - **Ack inside 10 seconds.** Past that Nylas times out and counts the delivery as
   failed. Return `200` first, then queue the work — never do the CRM write inline.
 - **Assume no ordering and no exactly-once.** An `.updated` can arrive before its
-  `.created`. Make handlers idempotent on message ID; `message.created` for a single
-  message legitimately arrives more than once.
+  `.created`. Make handlers idempotent on message ID — this is not theoretical: a
+  single reply in testing produced two `message.created` deliveries and drove this
+  repo's reply counter to 2 before [`src/store.js`](../../src/store.js) started
+  deduping on the reply's message ID.
+- **A brand-new Google grant is not immediately live.** Nylas has to establish its
+  Gmail watch first, so mail sent seconds after connecting may produce no
+  `message.created` at all, and Nylas does not backfill it. Do not treat silence right
+  after an OAuth connect as a broken endpoint — confirm with
+  `Nylas.webhooks.sendTestEvent()`, which proves reachability independently of any grant.
 - **Watch grant health.** Subscribe to `grant.created`, `grant.updated`,
   `grant.deleted`, and `grant.expired`. On expiry, prompt re-auth — never delete the
   grant, which is permanent and takes tracking and synced data with it.

@@ -21,6 +21,7 @@ reading files instead of guessing or making network calls.
 | Avoid sending twice on a retry | [recipes/idempotent-send.md](recipes/idempotent-send.md) |
 | Strip quoted text from a reply | [recipes/clean-message-bodies.md](recipes/clean-message-bodies.md) |
 | Look up an exact endpoint, field, or error | [reference/](reference/) — see [reference/_MANIFEST.md](reference/_MANIFEST.md) |
+| Understand why this repo chose X over Y | [notes/](notes/) |
 
 ## Core concepts
 
