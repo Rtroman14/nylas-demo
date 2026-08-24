@@ -36,7 +36,8 @@ if (!Nylas.currentGrantId()) {
     process.exit(1);
 }
 
-// Signatures are HTML-only, so the body has to be HTML for one to apply.
+// HTML so the styling below survives. A signature would make the message HTML
+// regardless of what the body started as.
 const body = `
 <div style="font-family: Arial, sans-serif; font-size: 14px; color: #111;">
   <p>Hi there,</p>

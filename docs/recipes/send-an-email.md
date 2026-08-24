@@ -39,7 +39,7 @@ Store `threadId` if you care about replies. See
 | `cc`, `bcc` | Same array-of-objects shape as `to` |
 | `replyTo` | Sets the Reply-To header. **Not** the same as `replyToMessageId` |
 | `replyToMessageId` | Threads this message under an existing one |
-| `signatureId` | Nylas appends a stored signature server-side. HTML bodies only |
+| `signatureId` | Nylas appends a stored signature server-side. Appending it makes the message HTML even if your body was plain text |
 | `attachments` | See [send-with-attachment.md](send-with-attachment.md) |
 | `trackingOptions` | `{ opens, links, threadReplies, label }`. Nylas trial/sandbox apps reject this with "Tracking options are not allowed for trial accounts." |
 | `sendAt` | Unix seconds; schedules the send |
@@ -50,7 +50,9 @@ Store `threadId` if you care about replies. See
 The API decides from what you send. `body` containing HTML is delivered as HTML.
 Two consequences worth knowing before you pick:
 
-- **Signatures require HTML.** A plaintext body silently gets no signature applied.
+- **`signatureId` forces HTML.** Nylas appends the signature HTML to your body rather
+  than skipping it on a plaintext send, so the message goes out as HTML and plain-text
+  line breaks stop rendering. Omit it when you want real plain text.
 - **HTML ignores newlines.** Line breaks come from tags. If your source text is plain
   prose with `\n` in it, escape it and convert the newlines to `<br>` — otherwise the
   whole message renders as one paragraph.

@@ -57,7 +57,9 @@ router.post("/api/send", upload.array("attachments", 5), async (req, res) => {
             body,
             cc,
             bcc,
-            // Nylas appends the signature server-side; HTML bodies only.
+            // Nylas appends the signature server-side. Note it appends signature
+            // HTML to a plaintext body too, which makes the message HTML — so a
+            // send that has to stay plain text must leave this unset.
             signatureId: signatureId || undefined,
             attachments: files,
             ...(trackOpens === "true" || trackOpens === true

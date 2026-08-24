@@ -58,8 +58,11 @@ These are the ones that cost real debugging time.
   after its first failure. Fix the problem, then create a *new* webhook.
 - **`message.created` fires for your own sends too.** Every handler needs to work out
   the direction of the message before treating it as an inbound reply.
-- **Signatures are HTML-only.** A plaintext body silently gets no signature. So do
-  open and link tracking, which need a pixel and rewritten anchors respectively.
+- **`signatureId` on a plaintext body converts the message to HTML.** Nylas appends
+  `<br><br>` plus the signature HTML rather than skipping it, so your `\n` line breaks
+  stop rendering. Want real plain text? Omit `signatureId` and write the sign-off into
+  the body. Open and link tracking genuinely do require HTML — a pixel and rewritten
+  anchors — so those are unavailable in plain text.
 - **There is no `thread_id` on send.** Threading is `reply_to_message_id` and nothing
   else — it is what becomes the `In-Reply-To` and `References` headers. Reply to the
   *newest* message in the thread; an older one branches it.

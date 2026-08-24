@@ -119,7 +119,7 @@ What you give up, all of it deliberately:
 
 | Feature | Why it needs HTML |
 | --- | --- |
-| Stored signatures (`signatureId`) | Nylas appends signature HTML; a plaintext body silently gets none. Write your sign-off into the text. |
+| Stored signatures (`signatureId`) | Passing it appends signature HTML and makes the whole message HTML, collapsing your `\n` line breaks. Omit it and write the sign-off into the text. |
 | Open tracking | Works by injecting a 1×1 image. No HTML, no pixel. |
 | Link click tracking | Rewrites `<a>` hrefs. No anchors, nothing to rewrite. |
 

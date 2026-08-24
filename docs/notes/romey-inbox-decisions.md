@@ -98,11 +98,17 @@ text and newlines survive.
 
 | Lost | Why |
 | --- | --- |
-| Stored signatures (`signature_id`) | Nylas appends signature *HTML*; a plaintext body silently gets none. Write the sign-off into the text. |
+| Stored signatures (`signature_id`) | Passing it appends signature HTML and converts the message to HTML, collapsing `\n` line breaks. Omit it; write the sign-off into the text. |
 | Open tracking | Needs the pixel. |
 | Link click tracking | Needs anchors. |
 
-Verified: a plaintext send arrived with `\n` intact and no signature applied.
+Verified: a plaintext send with no `signature_id` arrived with `\n` intact.
+
+Verified separately, and it corrects a claim this repo used to make: passing
+`signature_id` on a plaintext body does **not** skip the signature. Nylas appends
+`<br><br>` plus the signature HTML, the message is delivered with an HTML part, and the
+plain-text line breaks stop rendering for the reader. So Romey must not pass
+`signature_id` at all — the sign-off goes in the body text.
 
 ## Q: How does Romey fetch the inbox by email address?
 

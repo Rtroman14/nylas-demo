@@ -568,8 +568,13 @@ const attachments = {
  * signature already configured in Gmail or Outlook. Create one here, then pass
  * its ID to `messages.send`.
  *
- * Limits: 10 per grant, 100KB each, HTML only, one per message. Images have to
- * be hosted elsewhere and referenced by URL.
+ * Limits: 10 per grant, 100KB each, one per message. The signature body itself
+ * is HTML, and images have to be hosted elsewhere and referenced by URL.
+ *
+ * Passing a signatureId to a send whose body is plain text does NOT skip the
+ * signature — Nylas appends the signature HTML anyway and the message goes out
+ * as HTML, so plain-text line breaks stop rendering. A send that must stay
+ * plain text has to leave signatureId unset and write its own sign-off.
  *
  * The SDK has no signatures resource, so these go through `request()`.
  */

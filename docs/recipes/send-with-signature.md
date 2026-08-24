@@ -74,15 +74,23 @@ want to change it or strip it.
 | Signatures per grant | 10 |
 | Size per signature | 100KB |
 | Signatures per message | 1 |
-| Body format | HTML only |
+| Signature body format | HTML |
 | Images | External hosted URLs only — Nylas hosts nothing |
 
 Two behaviors that surprise people:
 
 - **There is no default signature.** Omit `signatureId` and nothing is appended.
   Pass it on every send where you want one.
-- **A plaintext body gets no signature.** Silently. If a signature is not appearing,
-  check that the body is HTML before checking anything else.
+- **`signatureId` on a plaintext body turns the message into HTML.** Nylas does not
+  skip the signature — it appends `<br><br>` plus the signature HTML to whatever you
+  sent, and the result is delivered as an HTML message. Verified on a Google grant: a
+  body of `"Plain body.\n\nMore text."` came back as
+  `"Plain body.\n\nMore text.<br><br><p …>…</p>"` and arrived with an HTML part, so the
+  `\n\n` no longer produced a line break for the reader.
+
+  So if you want a genuinely plain-text message, **do not pass `signatureId`** — write
+  the sign-off into the body text yourself. This is the opposite of the common
+  assumption that a plaintext body silently gets no signature.
 
 ## Drafts behave differently
 
