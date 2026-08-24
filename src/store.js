@@ -88,11 +88,23 @@ export const store = {
         );
     },
 
+    /**
+     * Count a reply once.
+     *
+     * Nylas makes no exactly-once guarantee, and in practice the same
+     * `message.created` does arrive more than once, which double-counted this
+     * before. Remembering the reply IDs makes a redelivery a no-op — the same
+     * thing every consumer of these notifications has to do somewhere.
+     */
     recordReply(threadId, messageId) {
         const tracked = state.threads[threadId];
         if (!tracked) return null;
 
-        tracked.replyCount += 1;
+        tracked.replyMessageIds ??= [];
+        if (messageId && tracked.replyMessageIds.includes(messageId)) return tracked;
+        if (messageId) tracked.replyMessageIds.push(messageId);
+
+        tracked.replyCount = tracked.replyMessageIds.length || tracked.replyCount + 1;
         tracked.lastReplyAt = new Date().toISOString();
         tracked.lastReplyMessageId = messageId;
         write(state);

@@ -125,6 +125,20 @@ const toAddresses = (input) => {
  */
 const INDEXED_METADATA_KEYS = ["key1", "key2", "key3", "key4", "key5"];
 
+/** Accept the "key1:value" form the Nylas docs use, or the object the SDK wants. */
+const toMetadataPair = (pair) => {
+    if (typeof pair !== "string") return pair;
+
+    const at = pair.indexOf(":");
+    if (at < 1) {
+        throw new NylasDemoError(`metadataPair must look like "key1:value", got "${pair}".`, {
+            status: 400,
+        });
+    }
+
+    return { [pair.slice(0, at)]: pair.slice(at + 1) };
+};
+
 const assertMetadata = (metadata) => {
     const entries = Object.entries(metadata);
 
@@ -373,18 +387,26 @@ const messages = {
      * or Bcc, which is what you want to pull someone's whole history with you —
      * `from` alone only gets their half of it.
      *
-     * `metadataPair` ("key1:value") filters on metadata you set, but it cannot
-     * be combined with a provider-backed filter such as `from` or `anyEmail`.
+     * `metadataPair` filters on metadata you set. The docs write it as the string
+     * "key1:value", but the SDK wants an object and turns a string into nonsense
+     * ("metadata filtering not allowed on provided `key`: 0"), so both forms are
+     * accepted here and normalized. It cannot be combined with a provider-backed
+     * filter — `from`, `anyEmail`, `threadId`, and `subject` all return
+     * "Query params can only filter by either `metadata` or `provider filters`".
      *
      * Shrink the payload with `select` (comma-separated fields) or
      * `fields: "include_basic_headers"` when you only need threading headers.
      *
      * @returns { data, nextCursor } — pass nextCursor back as `pageToken`.
      */
-    async list({ limit = 20, grantId, ...queryParams } = {}) {
+    async list({ limit = 20, grantId, metadataPair, ...queryParams } = {}) {
         const res = await sdk().messages.list({
             identifier: requireGrant(grantId),
-            queryParams: { limit, ...queryParams },
+            queryParams: {
+                limit,
+                ...queryParams,
+                ...(metadataPair ? { metadataPair: toMetadataPair(metadataPair) } : {}),
+            },
         });
         return { data: res.data ?? [], nextCursor: res.nextCursor };
     },
